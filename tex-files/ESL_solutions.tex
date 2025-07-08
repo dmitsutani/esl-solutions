@@ -10,22 +10,20 @@
 \geometry{letterpaper}    
 \usepackage{graphicx}
 
-\def\bQ{\textbf{Q}}
-\def\Err{\text{Err}}
-\def\err{\text{err}}
+\def\eps{\varepsilon}
 
+\def\cA{\mathcal{A}}
+\def\cT{\mathcal{T}}
+
+\def\bQ{\textbf{Q}}
 \def\var{\text{Var}}
 \def\bx{\textbf{x}}
 \def\eps{\varepsilon}
 \def\bz{\textbf{z}}
 \def\bX{\textbf{X}}
-\def\Trace{\text{trace}}
-\def\RSS{\text{RSS}}
-\def\Cov{\text{Cov}}
-
+\def\bu{\textbf{u}}
 \def\by{\textbf{y}}
 \def\br{\textbf{r}}
-
 \def\bV{\textbf{V}}
 \def\bI{\textbf{I}}
 \def\bR{\textbf{R}}
@@ -33,15 +31,22 @@
 \def\bS{\textbf{S}}
 \def\bq{\textbf{q}}
 \def\bOne{\textbf{1}}
-
+\def\bY{\textbf{Y}}
 \def\bU{\textbf{U}}
 \def\bD{\textbf{D}}
 \def\bV{\textbf{V}}
 \def\bZ{\textbf{Z}}
 \def\bGamma{\mathbf{\Gamma}}
 
+\def\Pr{\text{Pr}}
 \def\E{\text{E}}
-\def\bY{\textbf{Y}}
+\def\Trace{\text{trace}}
+\def\RSS{\text{RSS}}
+\def\Var{\text{Var}}
+\def\Cov{\text{Cov}}
+\def\Err{\text{Err}}
+\def\err{\text{err}}
+
 
 \newtheorem{exercise}{Exercise}[section]
 \tcolorboxenvironment{exercise}{
@@ -64,13 +69,153 @@ colframe=gray, before skip=10pt,after skip=10pt }
 \section{Overview of Supervised Learning}
 \hrulefill
 \vspace{.6cm}
+
+\begin{exercise}
+Suppose each of $K$-classes has an associated target $t_k$, which is a vector of all zeros, except a one in the $k$-th position. Show that classifying to the largest element of $\hat{y}$ amounts to choosing the closest target, $\min_k \|t_k - \hat{y}\|$, if the elements of $\hat{y}$ sum to one.	
+\end{exercise}
+
+\begin{solution}
+Evidently, the closest target corresponds to the $k$ which minimizes $(t_k^1 - \hat{y}^1)^2 + \dots + (t_k^K - \hat{y}^K)^2$, where superscripts denote vector components. By definition of $t_k$, this sum can be written as:
+$$\sum_{j \neq k} (\hat{y}^j)^2 + (1 - \hat{y}^k)^2.$$
+The difference of the (square) distance to $t_j$ and the (square) distance to $t_{j'}$ is thus given by the differing terms, namely:
+$$\|t_j - \hat{y}\|^2 - \|t_{j'} - \hat{y}\|^2 = (1 - \hat{y}^j)^2 - (1 - \hat{y}^{j'})^2 + (\hat{y}^{j'})^2 - (\hat{y}^j)^2 = 2(\hat{y}^{j'} - \hat{y}^{j}).$$
+Hence we have $\hat{y}^{j} \geq \hat{y}^{j'}$ if and only if the distance to $t_j$ is less than or equal to the distance to $t_j'$, and classifying to the largest component of $\hat{y}$ is equivalent to the distance criterion.
+\end{solution}
+
+
+\begin{exercise}
+	Show how to compute the Bayes decision boundary for the simulation example in Figure 2.5.
+\end{exercise}
+
+\begin{solution}
+Denote the classes $g_1$ and $g_2$. By Bayes' theorem, we have $	\Pr(g_i \, \vert\, X = x) \propto \Pr(X = x \, \vert\, g_i)\, \Pr(g_i)$. The constant of proportionality does not depend on $g_i$, and the marginal probabilities are equal: $\Pr(g_1) = \Pr(g_2)$. The decision boundary is thus $\Pr(X = x \, \vert\, g_1) = \Pr(X = x \, \vert\, g_2)$.
+
+With no knowledge of the chosen centers of the distributions, the decision boundary would be the line $x_1 = x_2$, since the centers are drawn from distributions centered at $(0,1)$ and $(1,0)$. This is not what is obtained in Figure 2.5, so we deduce that the decision boundary in Figure 2.5 must have been obtained conditioning on the centers $m_k^i$ for the classes $g_i$. 
+
+With known centers, we have:
+$$\Pr(X = x \, \vert\, g_i) \propto \frac{1}{10} \sum_{k=1}^{10} e^{-5\|x-m_k^i\|^2/2}.$$
+
+Thus the decision boundary is given by numerically solving the equation:
+$$\sum_{k=1}^{10} e^{-5\|x-m_k^1\|^2/2} = \sum_{k=1}^{10} e^{-5\|x-m_k^2\|^2/2}$$
+\end{solution}
+
+
 \begin{exercise}
     Derive equation (2.24).
 \end{exercise}
+
 \begin{solution}
     A ball of radius $r$ has volume $r^p \, \text{Vol} \,B(1)$, where $B(1)$ is the unit ball. Hence the probability that a given point lies inside it is $r^p$. The probability that a given point lies outside it is $1-r^p$; the probability that all points lie outside it is $(1-r^p)^N$. The median smallest distance $d(p,N)$ is the radius $r$ such that the probability above is $1/2$. Solving for $r$ gives
     $$d(p,N) = \left(1-\frac{1}{2^{1/N}}\right)^{1/p}$$
 \end{solution}
+
+
+\begin{exercise}
+The edge effect problem discussed on page 23 is not peculiar to uniform sampling from bounded domains. Consider inputs drawn from a spherical multinormal distribution $X \sim N(0, \bI_p$). The squared distance from any sample point to the origin has a $\chi_p^2$ distribution with mean $p$. Consider a prediction point $x_0$ drawn from this distribution, and let $a = x_0 / \|x_0\|$ be an associated unit vector. Let $z_i = a^T x_i$ be the projection of each of the training points on this direction.
+
+Show that the $z_i$ are distributed $N(0,1)$ with expected squared distance from origin 1, while the target point has expected squared distance $p$ from the origin. 
+
+Hence for $p = 1$, a randomly drawn test point is about 3.1 standard deviations from the origin, while all the training points are on average one standard deviation along direction $a$. So most prediction points see themselves as lying on the edge of the training set.	
+\end{exercise}
+
+\begin{solution}
+ This can be seen two ways. First, by rotational symmetry of the distribution of $X$, we can take $a = (1, 0, \dots, 0)^T$, so that $z_i = x_i^1$ which is evidently $N(0,1)$. Second, we can write $z_i = a_1 x_i^1 + \dots + a_p x_i^p$. Since the $a_j x_i^j$ are i.i.d. $N(0,a_j^2)$, we know their sum is $N(0, \sum_j a_j^2) = N(0,1)$, since $a$ is unit norm.
+\end{solution}
+
+
+\begin{exercise}
+\begin{enumerate}
+\item[(a)] Derive equation (2.27). The last line makes use of (3.8) through a conditioning argument.
+
+\item[(b)] Derive equation (2.28), making use of the \textit{cyclic} property of the trace operator $[\Trace(AB) = \Trace(BA)]$, and its linearity (which allows us to interchange the order of trace and expectation).
+\end{enumerate}
+\end{exercise}
+
+\begin{solution}
+\begin{enumerate}
+\item [(a)] Recalling that $\hat{y_0}$ is independent of $y_0$, and $y_0$ is independent of $\cT$, we obtain expanding the expression:
+$$\E_{y_0 | x_0} \E_\cT (y_0 - \hat{y}_0)^2 = \E_{y_0 | x_0}  (y_0)^2 - 2\, \E_{y_0 | x_0}  (y_0)\,\E_\cT(\hat{y}_0) + \E_\cT(\hat{y}_0)^2.$$	
+Adding and subtracting $(x_0^T \beta)^2$, and recalling that $\E_{y_0 | x_0}  (y_0) = x_0^T \beta$, we see that this equals:
+$$\Var(y_0 | x_0) + (x_0^T \beta)^2- 2 (x_0^T \beta)\E_\cT(\hat{y}_0) + \E_\cT(\hat{y}_0)^2.$$
+Now we add and subtract $[\E_\cT(\hat{y}_0)]^2$, and grouping the positive added term with $(x_0^T \beta)^2- 2 (x_0^T \beta)\E_\cT(\hat{y}_0)$ yields:
+$$\Var(y_0 | x_0) + [\E_\cT \hat{y}_0 - x_0^T \beta]^2 + \E_\cT(\hat{y}_0)^2 - [\E_\cT (\hat{y}_0)]^2 = \Var(y_0 | x_0) + \text{Bias}^2(\hat{y}_0) + \Var_\cT(\hat{y_0}).$$
+To justify the last line of (2.27), we only need to explain the variance term $\Var_\cT(\hat{y_0})$. Recall that by definition $\hat{y_0} = x_0^T \hat{\beta}$ and the variance of $\hat{\beta}$ given $\bX$ is given by $\Var_{\by | \bX}(\hat{\beta}) = (\bX^T \bX)^{-1} \sigma^2$ by (3.8). Hence $\Var_{\by | \bX}(x_0^T\hat{\beta}) = x_0^T(\bX^T \bX)^{-1}x_0 \sigma^2$. Therefore:
+$$\Var_{\cT}(\hat{y_0}) = \E_\cT\Var_{\by | \bX}(x_0^T\hat{\beta}) = \E_\cT x_0^T(\bX^T \bX)^{-1}x_0 \sigma^2,$$
+as desired.
+
+\item [(b)] We use commutativity of trace for matrices of different dimensions; namely if $A$ is $(m \times n)$ and $B$ is $(n \times m)$, then $\Trace(AB) = \Trace(BA)$ is still true. Applying this to $x_0^T$ ($1 \times p$) and $\Cov(X)^{-1}x_0$ ($p \times 1$), and the fact that the trace of a scalar is just the scalar, we have:
+$$\E_{x_0} x_0^T(\Cov(X))^{-1}x_0 = \Trace[\E_{x_0}(\Cov(X))^{-1}x_0x_0^T] = \Trace[\Cov(X)^{-1} \Cov(x_0)]. $$
+Assuming $x_0$ has the same distribution as the training data $X$, $\Cov(X)^{-1} \Cov(x_0)$ is the $p \times p$ identity, hence the trace is $p$.
+\end{enumerate}
+\end{solution}
+
+
+\begin{exercise}
+Consider a regression problem with inputs $x_i$ and outputs $y_i$, and a parameterized model $f_\theta(x)$ to be fit by least squares. Show that if there are observations with tied or identical values of $x_i$, then the fit can be obtained from a reduced weighted least squares problem.	
+\end{exercise}
+
+\begin{solution}
+	Suppose there are $N$ data points of the form $(x, y_i)$. The square error of the model on these points is 
+	$$\text{SSE}(\theta) = \sum_{i=1}^N (y_i - f_\theta(x))^2 = \sum_{i=1}^N y_i^2 - 2 f_\theta(x)\sum_{i=1}^N y_i + Nf_\theta(x)^2.$$
+	On the other hand, if we instead use a single point $(x, \bar{y})$ where $\bar{y} = \sum y_i/ N$, with weight $N$ in the weighted least squares regression, the new squared error will be:
+	$$\text{SSE}'(\theta) = N (\bar{y} - f_\theta(x))^2 = N \bar{y}^2 - 2 f_\theta(x) N \bar{y} + Nf_\theta(x)^2.$$
+	Note that the two error functions differ only on the first term, which does not depend on $\theta$. 
+\end{solution}
+
+
+\begin{exercise}
+    Suppose we have a sample of $N$ pairs $x_i, y_ii$ drawn i.i.d. from the distribution characterized as follows:
+    \begin{center}
+    $$\begin{aligned}&x_i \sim h(x), \text{ the design density}\\
+    &y_i = f(x_i) + \varepsilon_i, \, f \text{ is the regression function}\\
+    &\eps_i \sim (0, \sigma^2)\, \text{(mean zero, variance $\sigma^2$)}
+    \end{aligned}$$
+    \end{center}
+    We construct an estimator for $f$ linear in the $y_i$,
+$$\hat{f}(x_0) = \sum_{i = 1}^N \ell_i(x_0; \mathcal{X})y_i$$
+where the weights $\ell_i(x_0, \mathcal{X})$ do not depend on the $y_i$, but do depend on the
+entire training sequence of $x_i$, denoted here by $\mathcal{X}$.
+\begin{enumerate}
+\item[(a)] Show that linear regression and k-nearest-neighbor regression are members
+of this class of estimators. Describe explicitly the weights $\ell_i(x_0, \mathcal{X})$
+in each of these cases.
+\item[(b)] Decompose the conditional mean-squared error
+$$\E_{\mathcal{Y}| \mathcal{X}}[(f(x_0) - \hat{f}(x_0))^2]$$
+into a conditional squared bias and a conditional variance component.
+Like $\mathcal{X}$, $\mathcal{Y}$ represents the entire training sequence of $y_i$.
+\item[(c)] Decompose the (unconditional) mean-squared error
+$$\E_{\mathcal{Y}, \mathcal{X}}[(f(x_0) - \hat{f}(x_0))^2]$$
+into a squared bias and a variance component.
+\item[(d)] Establish a relationship between the squared biases and variances in
+the above two cases.
+\end{enumerate}
+\end{exercise}
+\begin{solution}\begin{enumerate}
+    \item [(a)]  For linear regression, $\hat{f}(x_0) = x_0^T \beta$, where $\beta = (\bX^T\bX)^{-1}\bX^T y$, so that $$\ell_i(x_0; \mathcal{X}) = x_0^T(\bX^T\bX)^{-1}x_i$$
+    For $k$-nearest-neighbors, we may write:
+    $$\hat{f}(x_0) = \frac{1}{k}\sum_{x_i \in N_k(x_0)} y_i,$$
+    so that:
+    $$\ell_i(x_0, \mathcal{X}) = \frac{1}{k} I_{N_k(x_0)}(x_i),$$
+    and $I_{N_k(x_0)}$ is the indicator function of the $k$-nearest neighbors of $x_0$.
+
+    \item [(b)]
+    $$\begin{aligned}\E_{\mathcal{Y}| \mathcal{X}}[(f(x_0) - \hat{f}(x_0))^2] &= \E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)^2] -2 f(x_0)\E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)] + f(x_0)^2 \\
+    &= \E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)^2]- \E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)]^2\\
+    &+ \E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)]^2 -2 f(x_0)\E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)] + f(x_0)^2 \\
+    &= \var_{\mathcal{Y}|\mathcal{X}}(\hat{f}(x_0)) + (\E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)]- f(x_0))^2 
+    \end{aligned}$$
+    The second term is the conditional square bias. 
+    \item [(c)] Similarly:
+    $$\E_{\mathcal{Y}, \mathcal{X}}[(f(x_0) - \hat{f}(x_0))^2]  = \var_{\mathcal{Y},\mathcal{X}}(\hat{f}(x_0)) + (\E_{\mathcal{Y}, \mathcal{X}}[\hat{f}(x_0)]- f(x_0))^2 $$
+
+    \item [(d)] We now use the linearity assumption. For simplicity, we write $y$ and $L = \ell(x_0, \mathcal{X})$ to be the coresponding vectors, so that $\hat{f}(x_0) = L^T y$. Further, we let $f(\mathcal{X}) = (f(x_1), \dots, f(x_n))$ and $\eps = f(\mathcal{X})-y$. Then
+    $$\E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)]- f(x_0) =  \E_{\mathcal{Y}| \mathcal{X}}[L^T(f(\mathcal{X})+\eps)]- f(x_0) = L^Tf(\mathcal{X})-f(x_0)$$
+    and
+    $$\var_{\mathcal{Y}|\mathcal{X}}(\hat{f}(x_0)) = \var_{\eps}(L^T\eps) = \, \sigma^2 L^T L.$$
+\end{enumerate}
+\end{solution}
+
+\newpage
 
 \begin{exercise}Compare the classification performance of linear regression and $k$–
 nearest neighbor classification on the zipcode data. In particular, consider
@@ -81,11 +226,7 @@ website www-stat.stanford.edu/ElemStatLearn.
 \begin{solution}
     The results for different $k$ and linear regression are shown below. 
 
-\begin{figure*}[b!]
-\centering
-\includegraphics[width = 9.5cm, height = 9.5cm]{fig_2.8.png}
-\end{figure*}
-
+\vspace{.5cm}
 \begin{tcolorbox}[width=\linewidth, sharp corners=all, colback=white!95!black]
 
     \begin{verbatim}
@@ -144,61 +285,14 @@ plt.legend()
 plt.show()
 \end{verbatim}
 \end{tcolorbox}
+
+\begin{figure*}[b!]
+\centering
+\includegraphics[width = 9.5cm, height = 9.5cm]{fig_2.8.png}
+\end{figure*}
+
 \end{solution}
 
-\begin{exercise}
-    Suppose we have a sample of $N$ pairs $x_i, y_ii$ drawn i.i.d. from the distribution characterized as follows:
-    \begin{center}
-    $$\begin{aligned}&x_i \sim h(x), \text{ the design density}\\
-    &y_i = f(x_i) + \varepsilon_i, \, f \text{ is the regression function}\\
-    &\eps_i \sim (0, \sigma^2)\, \text{(mean zero, variance $\sigma^2$)}
-    \end{aligned}$$
-    \end{center}
-    We construct an estimator for $f$ linear in the $y_i$,
-$$\hat{f}(x_0) = \sum_{i = 1}^N \ell_i(x_0; \mathcal{X})y_i$$
-where the weights $\ell_i(x_0, \mathcal{X})$ do not depend on the $y_i$, but do depend on the
-entire training sequence of $x_i$, denoted here by $\mathcal{X}$.
-\begin{enumerate}
-\item[(a)] Show that linear regression and k-nearest-neighbor regression are members
-of this class of estimators. Describe explicitly the weights $\ell_i(x_0, \mathcal{X})$
-in each of these cases.
-\item[(b)] Decompose the conditional mean-squared error
-$$\E_{\mathcal{Y}| \mathcal{X}}[(f(x_0) - \hat{f}(x_0))^2]$$
-into a conditional squared bias and a conditional variance component.
-Like $\mathcal{X}$, $\mathcal{Y}$ represents the entire training sequence of $y_i$.
-\item[(c)] Decompose the (unconditional) mean-squared error
-$$\E_{\mathcal{Y}, \mathcal{X}}[(f(x_0) - \hat{f}(x_0))^2]$$
-into a squared bias and a variance component.
-\item[(d)] Establish a relationship between the squared biases and variances in
-the above two cases.
-\end{enumerate}
-\end{exercise}
-\begin{solution}\begin{enumerate}
-    \item [(a)]  For linear regression, $\hat{f}(x_0) = x_0^T \beta$, where $\beta = (\bX^T\bX)^{-1}\bX^T y$, so that $$\ell_i(x_0; \mathcal{X}) = x_0^T(\bX^T\bX)^{-1}x_i$$
-    For $k$-nearest-neighbors, we may write:
-    $$\hat{f}(x_0) = \frac{1}{k}\sum_{x_i \in N_k(x_0)} y_i,$$
-    so that:
-    $$\ell_i(x_0, \mathcal{X}) = \frac{1}{k} I_{N_k(x_0)}(x_i),$$
-    and $I_{N_k(x_0)}$ is the indicator function of the $k$-nearest neighbors of $x_0$.
-
-    \item [(b)]
-    $$\begin{aligned}\E_{\mathcal{Y}| \mathcal{X}}[(f(x_0) - \hat{f}(x_0))^2] &= \E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)^2] -2 f(x_0)\E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)] + f(x_0)^2 \\
-    &= \E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)^2]- \E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)]^2\\
-    &+ \E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)]^2 -2 f(x_0)\E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)] + f(x_0)^2 \\
-    &= \var_{\mathcal{Y}|\mathcal{X}}(\hat{f}(x_0)) + (\E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)]- f(x_0))^2 
-    \end{aligned}$$
-    The second term is the conditional square bias. 
-    \item [(c)] Similarly:
-    $$\E_{\mathcal{Y}, \mathcal{X}}[(f(x_0) - \hat{f}(x_0))^2]  = \var_{\mathcal{Y},\mathcal{X}}(\hat{f}(x_0)) + (\E_{\mathcal{Y}, \mathcal{X}}[\hat{f}(x_0)]- f(x_0))^2 $$
-
-    \item [(d)] We now use the linearity assumption. For simplicity, we write $y$ and $L = \ell(x_0, \mathcal{X})$ to be the coresponding vectors, so that $\hat{f}(x_0) = L^T y$. Further, we let $f(\mathcal{X}) = (f(x_1), \dots, f(x_n))$ and $\eps = f(\mathcal{X})-y$. Then
-    $$\E_{\mathcal{Y}| \mathcal{X}}[\hat{f}(x_0)]- f(x_0) =  \E_{\mathcal{Y}| \mathcal{X}}[L^T(f(\mathcal{X})+\eps)]- f(x_0) = L^Tf(\mathcal{X})-f(x_0)$$
-    and
-    $$\var_{\mathcal{Y}|\mathcal{X}}(\hat{f}(x_0)) = \var_{\eps}(L^T\eps) = \, \sigma^2 L^T L $$
-
-    
-\end{enumerate}
-\end{solution}
 
 \begin{exercise}
     Consider a linear regression model with $p$ parameters, fit by least
@@ -339,9 +433,9 @@ plt.show()
 
 \end{solution}
 
-\begin{exercise}Gauss–Markov theorem:
+\begin{exercise} Gauss-Markov theorem:
 \begin{enumerate}
-\item[(a)] Prove the Gauss–Markov theorem: the least squares estimate of a
+\item[(a)] Prove the Gauss-Markov theorem: the least squares estimate of a
 parameter $a^T \beta$ has variance no bigger than that of any other linear
 unbiased estimate of $a^T \beta$ (Section 3.2.2).
 \item[(b)] The matrix inequality $B \prec A$ holds if $B-A$ is positive semidefinite. Show that if $\hat{\bV}$ is the variance-covariance matrix of the least squares estimate of $\beta$ and $\tilde{\bV}$ is the variance-covariance matrix of any other
@@ -452,6 +546,134 @@ implemented by adding artificial data examples that satisfy them.
 \end{solution}
 
 \begin{exercise}
+Consider a regression problem with all variables and response having mean zero and standard deviation one. Suppose also that each variable has identical absolute correlation with the response:
+$$\frac{1}{N}|\langle \bx_j, \by \rangle | = \lambda, \, j = 1, \dots, p.$$	
+Let $\hat{\beta}$ be the least-squares coefficient of $\by$ on $\bX$ and let $\bu(\alpha) = \alpha \bX \hat{\beta}$ for $\alpha \in [0,1]$ be the vector that moves a fraction $\alpha$ toward the least squares fit $\bu$. Let $\RSS$ be the residual sum-of-squares from the full least squares fit.
+
+\begin{enumerate}
+\item[(a)] Show that
+$$\frac{1}{N} |\langle \bx_j, \by - \bu(\alpha) \rangle| = (1-\alpha) \lambda, \, j = 1, \dots, p,$$
+and hence the correlations of each $\bx_j$ with the residuals remain equal in magnitude as we progress toward $\bu$.
+
+\item [(b)] Show that these correlations are all equal to
+$$\lambda(\alpha) = \frac{(1-\alpha)}{\sqrt{(1-\alpha)^2 + \frac{\alpha(2-\alpha)}{N}\cdot \RSS}} \lambda,$$
+and hence they decrease monotonically to zero.
+
+\item[(c)] Use these results to show that the LAR algorithm in Section 3.4.4 keeps the correlations tied and monotonically decreasing, as claimed in (3.55)	
+\end{enumerate}
+\end{exercise}
+
+\begin{solution}
+\begin{enumerate}
+	\item [(a)] Write $\bu(\alpha) = \bu - (1-\alpha) \bX \hat{\beta}$, and recall that $\langle \bx_j, \by - \bu \rangle = 0$ since the residuals are orthogonal to the predictors for the OLS solution, so that 
+$$|\langle \bx_j, \by - \bu(\alpha) \rangle|  = |\langle \bx_j, (1-\alpha) \bX \hat{\beta} \rangle| = (1-\alpha) |\langle \bx_j,  \bX \hat{\beta} \rangle|.$$
+On the other hand, $\langle \bx_j,  \bX \hat{\beta} \rangle = \langle \bx_j,  \bX \hat{\beta} \rangle + \langle \bx_j, \br \rangle = \langle \bx_j,  \bX \hat{\beta}  + \br \rangle = \langle \bx_j,  \by\rangle$, since once again the residual $\br = \by - \bu$ is orthogonal to $\bx_j$. Using the hypothesis concludes the proof.
+
+\item [(b)] The correlation is given by 
+$$N\frac{(1-\alpha)\lambda}{\|\bx_j\| \|\by - \bu(\alpha)\|},$$
+using part (a). Since $\|x_j\|^2 = N$ by hypothesis, we only have to compute $\|\by - \bu(\alpha)\|$. 
+
+Recall that $\|\by\|^2 = N$, since the response is also assumed to be standardized, and since $\bu $ and $\br$ are orthogonal, we see that $\|\bu\|^2 = N-\RSS$, since $\RSS = \|\br\|^2$ by definition.  
+
+Again, write $\by = \bu + \br$, so that $\by - \bu(\alpha) = (1-\alpha)\bu + \br$ and so again by orthogonality:
+ $$\begin{aligned}\|\by - \bu(\alpha)\|^2 &=(1-\alpha)^2 \|\bu\|^2 + \|\br\|^2 \\
+ & = (1-\alpha)^2(N-\RSS) + \RSS \\
+ &= (1-\alpha)^2 N + \alpha(2-\alpha) \RSS.
+\end{aligned}
+$$
+Plugging and canceling the $N$'s out gives the desired formula. Clearly as $\alpha \to 1$ the numerator goes to 0 whereas the denominator does not, due to the second term.
+
+\item [(c)] Suppose inductively that at the beginning of the current step the active variables $\cA_k$ have the same correlation $\lambda$ with the residual $\br_k = \by - \bX_{\cA_k} \beta_{\cA_k}$. Since $\beta_{\cA_k}(\alpha) = \beta_{\cA_k} + \alpha \delta_k$, and $\delta_k$ is obtained as the regression coefficient vector of $\br_k$ on the covariates in $\cA_k$, the new residual as a function of $\alpha$ is:
+$$\br_k(\alpha) = \by - \bX_{\cA_k}(\beta_{\cA_k} + \alpha \delta_k) = \br_k - \alpha \bX_{\cA_k} \delta_k.$$
+By (a), the correlations of $\br_k(\alpha)$ with the covariates in $\cA_k$ remain the same.
+	
+\end{enumerate}
+\end{solution}
+
+\begin{exercise}
+\textit{LAR directions}. Using the notation around equation (3.55) on page 74, show that the LAR direction makes an equal angle with each of the predictors in $\cA_k$.	
+\end{exercise}
+\begin{solution}
+ Since the LAR direction $\bu$ is obtained by projecting $\br$ onto the span of the variables in $\cA_k$, evidently $\langle \bx_j, \bu \rangle = \langle \bx_j, \br \rangle$, for $\bx_j \in \cA_k$. By the previous exercise, at each step of the LAR the residual $\br$ makes the same angle with the variables $\bx_j \in \cA_k$, since they are normalized to unit, hence so does $\bu$.
+\end{solution}
+
+\begin{exercise}
+LAR look-ahead (Efron et al., 2004, Sec. 2 Least Angle Regression). Starting at the beginning of the $k$-th step of the LAR algorithm, derive expressions to identify the next variable to enter the active set at step $k+1$, and the value of $\alpha$ at which this occurs (using the notation around equation (3.55) on page 74).	
+\end{exercise} 
+
+\begin{solution}
+Again, denote the current residue by $\br$, the LAR direction $$\bu = \bX_{\cA_k}(\bX_{\cA_k}^T\bX_{\cA_k})^{-1} \bX_{\cA_k}^T \br$$
+and the active variables by $\cA_k$. Then, as before:
+$$\frac{1}{N}|\langle \bx_j, \br - \alpha \bu\rangle| = (1-\alpha)\lambda, \, \text{ for } {\bx}_j \in \cA_k,$$
+where $\lambda = |\langle \bx_j, \br \rangle|$. For $\bx_i \notin \cA_k$, we have $|\langle \bx_i, \br -\alpha \bu\rangle| = |\langle \bx_i, \br \rangle - \alpha \langle \bx_i,\bu\rangle|$, where the sign depends on whether the two inner products on the right hand side have the same sign. 
+
+Equating the two expressions, gives 
+$$\alpha_i = \frac{\langle \bx_i, \br  \rangle -\lambda}{\langle \bx_i, \bu  \rangle -\lambda} \, \text{ or } \alpha_i = \frac{\langle \bx_i, \br  \rangle +\lambda}{\langle \bx_i, \bu  \rangle +\lambda},$$
+depending on which of the expressions is positive. Finding the minimimal positive $\alpha_i$ then yields $\bx_i$ which should enter in the next step.
+\end{solution}
+
+\begin{exercise}
+	
+\end{exercise}
+
+
+
+\begin{exercise}
+[Lasso and LAR] Consider the lasso problem in Lagrange multiplier form: with $L(\beta) = \frac{1}{2}\sum_i (y_i - \sum_j x_{ij} \beta_j)^2$, we minimize
+$$L(\beta) + \sum_j\lambda|\beta_j| \hspace{3cm}(1)$$
+for fixed $\lambda > 0.$
+\begin{enumerate}
+\item [(a)] Setting $\beta_j = \beta_j^+ - \beta_j^-$, with 	$\beta_j^+, \beta_j^- \geq 0$, expression (1) becomes $L(\beta) + \lambda \sum_j(\beta_j^+ - \beta_j^-)$. Show that the Lagrange dual function is 
+$$L(\beta) + \lambda \sum_j(\beta_j^+ - \beta_j^-) - \sum_j \lambda_j^+\beta_j^+ - \sum_j \lambda_j^-\beta_j^-,$$
+and the Karush-Kuhn-Tucker optimality conditions are:
+$$
+\begin{aligned}
+\nabla L(\beta)_j + \lambda - \lambda_j^	+ = 0&\\
+-\nabla L(\beta)_j + \lambda - \lambda_j^	- = 0&\\
+\lambda_j^+\beta_j^+ = 0\\
+\lambda_j^-\beta_j^- = 0
+\end{aligned}
+$$
+along with non-negativity constraints on the parameters and all the Lagrange multipliers.
+
+\item [(b)] Show that $|\nabla L (\beta)_j| \leq \lambda$ for all $j$, and that the KKT conditions imply one of the following three scenarios:
+$$\begin{aligned}\lambda = 0 & \implies \nabla L(\beta)_j = 0, \,  \forall j \\
+	\beta_j^+ > 0, \, \lambda > 0 & \implies \lambda_j^+ = 0, \, \nabla L(\beta)_j = -\lambda < 0, \,  \beta_j^- = 0 \\
+	\beta_j^- > 0, \, \lambda > 0 & \implies \lambda_j^- = 0, \, \nabla L(\beta)_j = \lambda > 0, \,  \beta_j^+ = 0 
+\end{aligned}
+$$
+
+\item [(c)] Suppose the set of active predictors is unchanged for $\lambda_0 \geq \lambda \geq \lambda_1$. Show that there is a vector $\gamma_0$ such that
+$$ \hat{\beta}(\lambda) = \hat{\beta}(\lambda_0) - (\lambda-\lambda_0)\gamma_0.$$
+Thus the lasso solution path is linear as $\lambda$ ranges from $\lambda_0$ to $\lambda_1$ (Efron et al., 2004;  Rosset and Zhu, 2007). 
+\end{enumerate}
+	
+\end{exercise}
+
+\begin{solution}
+\begin{enumerate}
+\item [(a)] We have $2p$ variables $\beta_j^\pm$ and constraints $-\beta_j^\pm \leq 0$. Recall that the Lagrangian is obtained by adding each of the constraints to the objective function multiplied by a multiplier, which gives the desired expression. The first two KKT conditions stated are the stationarity conditions, obtained by taking gradients with respect to $\beta_j^\pm$. The remaining two are known as complementary slackness conditions.
+
+\item [(b)] The condition $|\nabla L (\beta)_j| \leq \lambda$ follows immediately from the three scenarions that follows plus the observation that if $\beta_j^+ = \beta_j^- = 0$ then $\nabla L (\beta)_j = 0$. 
+
+If $\lambda = 0$, that is scenario 1, for all $j$ we have $\nabla L(\beta)_j = \lambda_j^+ = - \lambda_j^-$. Since $\lambda_j^+, \lambda_j^- \geq0$, this forces $\nabla L(\beta)_j = 0$.
+
+If $\lambda >0$ and $\beta_j^+ > 0$, that is scenario 2, complementary slackness forces $\lambda_j^+ = 0$, so that the first stationarity condition gives $\nabla L(\beta)_j = - \lambda$. The second stationarity condition then gives $\lambda_j^- = 2 \lambda > 0$, so that by complementary slackness $\beta_j^- = 0$. The third scenario is analogous.
+
+\item [(c)] Since the objective function is convex (in fact, strictly convex as long as no variables are only zeros), it suffices to show that there exists a solution to the KKT conditions of the form $ \hat{\beta}(\lambda) = \hat{\beta}(\lambda_0) - (\lambda-\lambda_0)\gamma_0.$ 
+
+Let us analyze the $j$-th coefficient, and show that it is affine  in $\lambda$. Without loss of generality, assume that at $\lambda = \lambda_0$ we have $\lambda_j^- = 0$, so that $\nabla L(\beta(\lambda_0))_j = \lambda_0$.  Recall that $\nabla L(\beta)_j = \bx_j^T(\by - \bX \beta)$, so that for a KKT solution we must have 
+$$\nabla L(\hat{\beta}(\lambda))_j = \bx_j^T(\by - \bX \hat{\beta}(\lambda)) = \lambda$$ 
+for $\lambda_0 \geq \lambda \geq \lambda_1$. Choosing the appropriate $\hat{\beta}(\lambda_0)$ so that the expression holds at $\lambda_0$, and plugging $ \hat{\beta}(\lambda) = \hat{\beta}(\lambda_0) - (\lambda-\lambda_0)\gamma_0$, gives 
+
+$$(\lambda-\lambda_0) \bx_j^T\bX_r \gamma_0 = \lambda - \lambda_0. $$
+This in turn gives the solution $\gamma_0 = (\bX_r^T \bX_r)^{-1}(1, \dots, 1)^T$, where $\bX_r$ is the feature matrix of only the active variables.
+\end{enumerate}
+\end{solution}
+
+
+
+\begin{exercise}
     Suppose for a given $t$ in (3.51) the fitted lasso coefficient for the variable $X_j$ is $\hat{\beta}_j = a$. Suppose we augment our set of variables with an identical copy $X^*_j = X_j$. Characterize the effect of this exact collinearity by describing the set of solutions for $\hat{\beta}_j$ and $\hat{\beta}_j^*$ using the same value of $t$.
 \end{exercise}
 \begin{solution}
@@ -464,6 +686,41 @@ implemented by adding artificial data examples that satisfy them.
 
     Therefore adding the copy of a variable creates ambiguity on the coefficients of the copied variable and its copy, i.e., any choice of the form $\beta_p = t\beta_p^0$, $\beta_{p+1} = (1-t)\beta_p^0$ for $t \in [0,1]$ will be a solution to lasso regression. 
 \end{solution}
+
+\begin{exercise}
+Suppose we run a ridge regression with parameter $\lambda$ on a single variable $X$, and get coefficient $a$. We now include an exact copy $X^*$, and refit our ridge regression. Show that both coefficients are identical, and derive their value. Show in general that if  $m$ copies of a variable $X$ are included in a ridge regression, their coefficients are all the same.	
+\end{exercise}
+\begin{solution}
+For the univariate case with one copy we can use the explicit solution $\beta =  (\bX^T \bX + \lambda \bI)^{-1}\bX^T \by$. Note that without the copy we have 
+$$a = \frac{\langle X, \by \rangle}{\langle X, X \rangle + \lambda}.$$
+With the copy, $\bX^T \bX$ is a 2 $\times$ 2 matrix with $\langle X, X \rangle$ in all 4 entries. Then we can compute directly:
+$$(\bX^T \bX + \lambda \bI)^{-1} = \frac{1}{2\lambda \langle X, X \rangle  + \lambda^2} 
+\begin{pmatrix}
+\langle X, X \rangle + \lambda & - \langle X, X \rangle\\- \langle X, X \rangle & \langle X, X \rangle + \lambda
+\end{pmatrix}
+$$
+Since $\bX^T \by$ is a vector with two identical components $\langle X, \by \rangle$, we deduce that the coefficients in $\beta$ are identical and equal to:
+$$\frac{\langle X, \by \rangle}{2 \langle X, X \rangle +\lambda}.
+$$
+
+We use the same notation as in the previous exercise and deal with the general case. We add columns $x_{i (p+1)} = \dots = x_{i (p+m)} =x_{ip}$ with coefficients $\beta_{p+1}, \dots \beta_{p+m}$, which are copies of the last column $\bx_p$. The optimization problem is then:
+    $$\hat{\beta}^{ridge} = \arg \min_\beta \sum_{i = 1}^N \left(y_i - \beta_0 - \sum_{j=1}^{p-1} x_{ij}\beta_j - x_{ip}(\beta_p+ \dots + \beta_{p+m})\right)^2$$
+    subject to $\sum_{j = 1}^{p+m} \beta_j^2 \leq t$. Observe that the objective function only depends on the sum $\beta_p+ \dots + \beta_{p+m}$. We claim that these $m+1$ coefficients have to be equal. Indeed, suppose that at the optimal solution, where $\sum_{j = 1}^{p+m} \beta_j^2 = t$, they are not all equal. The maximum of $x_1 + \dots + x_{m+1}$ subject to $x_1^2 + \dots + x_m^2 \leq t$ is attained when all values are equal, as is easily seen with Lagrange's method. This in turn implies that the solution is not optimal, since we could obtain the same mean squared error while decreasing $\sum_{j = 1}^{p+m} \beta_j^2$.
+\end{solution}
+
+
+
+\begin{exercise}
+	Consider the elastic-net optimization problem:
+$$\min_{\beta} \| \by - \bX\beta\|^2 + \lambda[\alpha \|\beta\|_2^2 + (1-\alpha)\|\beta\|_1]$$
+ 
+Show how one can turn this into a lasso problem, using an augmented version of $\bX$ and $\by$.
+\end{exercise}
+\begin{solution}
+We augment $\bX$ into $\bX'$, a $(N+p) \times p$ matrix, by stacking $\sqrt{\lambda \alpha} \bI_p$, where $\bI_p$ is the $(p \times p)$-identity matrix, below $\bX$. We augment $\by$ into $\by'$ by adding $p$ zeros at the end. Then $\by' - \bX' \beta = (\by - \bX \beta, \sqrt{\lambda\alpha}\beta)^T$, so that $\|\by' - \bX' \beta\|_2^2 = \| \by - \bX\beta\|^2 + \lambda\alpha \|\beta\|_2^2$. Thus, for the augmented problem, elastic-net corresponds to lasso with regularization parameter $\lambda(1-\alpha)$.
+\end{solution}
+
+
 
 \setcounter{section}{6}
 \newpage
