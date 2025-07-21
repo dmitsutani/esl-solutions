@@ -16,7 +16,7 @@
 \def\cT{\mathcal{T}}
 
 \def\bQ{\textbf{Q}}
-\def\var{\text{Var}}
+\def\b1{\textbf{1}}
 \def\bx{\textbf{x}}
 \def\eps{\varepsilon}
 \def\bz{\textbf{z}}
@@ -42,6 +42,7 @@
 \def\E{\text{E}}
 \def\Trace{\text{trace}}
 \def\RSS{\text{RSS}}
+\def\var{\text{Var}}
 \def\Var{\text{Var}}
 \def\Cov{\text{Cov}}
 \def\Err{\text{Err}}
@@ -528,6 +529,7 @@ $\bX$ on $\by$ , along with the standard errors and $Z$-scores as in Table 3.2. 
     By Exercise 3.1, the residual sum of squares difference ($F$-score) is proportional to the $Z$-score when dropping a single variable. Hence we simply pick the variable with smallest $Z$-score to drop.
 \end{solution}
 
+
 \begin{exercise} Show that the ridge regression estimates can be obtained by ordinary least squares regression on an augmented data set. We augment
 the centered matrix $\bX$ with $p$ additional rows $\sqrt{r\mathbf{I}}$, and augment y with p
 zeros. By introducing artificial data having response value zero, the fitting
@@ -544,6 +546,57 @@ implemented by adding artificial data examples that satisfy them.
     which is the Ridge regression estimator.
 
 \end{solution}
+
+
+\begin{exercise}
+Derive the expression (3.62), and show that $\hat{\beta}^{pcr}(p) = \hat{\beta}^{ls}$.	
+\end{exercise}
+
+\begin{solution}
+Denote by $\bZ_M$ the matrix with columns $\bz_1, \dots, \bz_M$ and $\bV_M$ the matrix with columns $v_1, \dots, v_M$. By definition $\bZ_M = \bX \bV_M$. By (3.61), in this notation we have: 
+$$\by_{(M)}^{pcr} - \bar{y} \b1 = \bZ_M \hat{\theta} = \bX \bV_M \hat{\theta}.$$
+We thus recognize that in $\bx_j$-coordinates, the coefficient vector is given by $\hat{\beta}^{pcr}(M) = \bV_M \hat{\theta} = \sum_{m=1}^M \hat{\theta}_m v_m$. 
+
+For $M = p$, note that $\bZ_p = \bX \bV_p = \bU \bD$, where $\bX = \bU \bD \bV^T$. This is because $\bV_p = \bV$ and $\bV$ is orthogonal. Writing $\hat{\theta}_m = \langle \bz_m, \by \rangle /\langle \bz_m, \bz_m \rangle$ in matrix form using orthogonality of $\bU$ we have $\hat{\theta} = \bD^{-1} \bU^T \by$. Plugging into (3.61) gives
+
+$$\by_{(p)}^{pcr} - \bar{y} \b1 = \bZ_p \hat{\theta} = \bU \bU^T \by,$$
+which is the OLS solution (3.46).
+\end{solution}
+
+
+
+
+\begin{exercise}
+Derive the entries in Table 3.4, the explicit forms for estimators in the orthogonal case.	
+\end{exercise}
+
+\begin{solution}
+	Recall the ridge solution $\hat{\beta}^{ridge} = (\bX^T \bX + \lambda \bI)^{-1}\bX^T \by$ and OLS solution $\hat{\beta}^{OLS} = (\bX^T \bX )^{-1}\bX^T \by$. For $\bX$ orthogonal, we have $\bX^T \bX = \bI$, so that it is clear the coefficients are simply scaled by $1/(1+\lambda)$ relative to the OLS solution.
+	
+	For lasso, assume for the sake of simplicity that the OLS coefficients are all positive. Then $\by = \beta_1 \bx_1 + \dots + \beta_p \bx_p + \br$, where $\br$ is the residue and the $\bx_i$ are orthonormal. The objective function is then 
+	$$\frac{1}{2}\|\by - \bX \beta^{lasso}\|^2 + \lambda \sum_{i=1}^p |\beta_i^{lasso}| = \frac{1}{2}\|\br\|^2 + \frac{1}{2}\sum_{i=1}^p (\beta_i - \beta_i^{lasso})^2 + \lambda |\beta_i^{lasso}|.$$
+	
+	It thus suffices to minimize the univariate objective functions $(\beta_i - \beta_i^{lasso})^2 + 2\lambda |\beta_i^{lasso}|$. Since both functions are convex, the optimal occurs either when $\beta_i^{lasso} = 0$, i.e., the point of non differentiability, or when the derivative is zero $\text{sgn}(\beta_i^{lasso})\lambda - (\beta_i - \beta_i^{lasso}) = 0$. It is clear from the form of the objective function that $\text{sgn}(\beta_i^{lasso}) = \text{sgn}(\beta_i)$ at the global minimum so that $\beta_i^{lasso} = \text{sgn}(\beta_i)(|\beta_i| - \lambda)$ is the derivative zero point. Plugging, it becomes evident that $\beta_i^{lasso} = 0$ minimizes the objective function for $\lambda > |\beta_i|$, so we have the desired result.
+	
+	For the best subset regression, it suffices to observe that  in the orthonormal casethe square of the norm of the residue is given by $\|\br\|^2 + \sum_{i \notin \cA} \beta_i^2$, where $\|\br\|$ is again the OLS residue and $\cA$ are the set of variables chosen. Hence the smallest residue is obtained by simply choosing the parameters with largest coefficients in absolute value. 
+\end{solution}
+
+
+\begin{exercise}
+Show that $\|\hat{\beta}^{ridge}\|$
+ increases as its tuning parameter $\lambda \to 0$. Does the same property hold for the lasso and partial least squares estimates? For the latter, consider the tuning parameter to be the successive steps in the algorithm.	
+\end{exercise}
+
+\begin{solution}
+	Recall the ridge solution $\hat{\beta}^{ridge} = (\bX^T \bX + \lambda \bI)^{-1}\bX^T \by$. Plugging the SVD decomposition $\bX = \bU \bD \bV^T$: 
+	$$\hat{\beta}^{ridge} =\bV^T(\bD^2 + \lambda \bI )^{-1}\bD \bU^T \by.$$
+	Now observe that $\bD \bU^T \by$ is a fixed vector, i.e., it does not depend on $\lambda$, which we denote $\bu$. Further, $(\bD^2 + \lambda \bI )^{-1}$ is a diagonal matrix with positive entries strictly decreasing in $\lambda$. Hence, $\|(\bD^2 + \lambda \bI )^{-1} \bu\|$ is strictly decreasing in $\lambda$. Finally, since $\bV^T$ is orthogonal, we have $\|\bV^T(\bD^2 + \lambda \bI )^{-1} \bu\|= \|(\bD^2 + \lambda \bI )^{-1} \bu\|$, so that $\|\hat{\beta}^{ridge}\| = \|\bV^T(\bD^2 + \lambda \bI )^{-1} \bu\|$ is strictly decreasing in $\lambda$.
+	
+	For lasso the result does not have to hold. In a bivariate regression, suppose the OLS coefficients are $b_2 > b_1 > 0$. It is possible to arrange so that the lasso coefficient paths attains a point where $\beta_2 = a > b_2$ and $\beta_1 = 0$, for some $\lambda$. This can be seen visually in Figure 3.11: it suffices to construct an ellipse which intersects the line $\beta_1 + \beta_2 = a$ once at $(0,a)$ and once in the second quadrant, and such that the center of the ellipse has $\beta_2$-coordinate center smaller than $a$ but positive. Then at some later point along the lasso path (i.e. smaller $\lambda$ or larger $t$) after the coefficients pass $(\beta_1, \beta_2) = (0,a)$, $\beta_1$ must become positive for the first time while $\beta_2$ decreases, in order to reach the OLS coefficients. At such point, the derivative of the $\ell^2$-norm will be negative as a function of $t$:
+	$$\frac{d}{dt} (\beta_1^2 + \beta_2^2) = 2 \beta_1 \frac{d}{dt} \beta_1 + 2 \beta_2 \frac{d}{dt} \beta_2 = 0 + 2 \beta_2 \frac{d}{dt} \beta_2 < 0,$$
+since $\beta_1 = 0$ and $\frac{d}{dt} \beta_2 < 0$. The situation is similar for PLS.	
+\end{solution}
+
 
 \begin{exercise}
 Consider a regression problem with all variables and response having mean zero and standard deviation one. Suppose also that each variable has identical absolute correlation with the response:
